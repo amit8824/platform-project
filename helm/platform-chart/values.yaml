@@ -2,7 +2,7 @@ app:
   name: platform-api
 
 
-replicaCount: 5
+replicaCount: 2
 
 
 image:
