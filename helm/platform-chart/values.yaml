@@ -1,0 +1,27 @@
+app:
+  name: platform-api
+
+
+replicaCount: 5
+
+
+image:
+  repository: platform-api
+  tag: v1
+
+
+service:
+  name: platform-service
+  port: 80
+  targetPort: 8000
+
+
+ingress:
+
+  host: platform.local
+
+
+config:
+
+  APP_ENV: production
+  LOG_LEVEL: INFO
