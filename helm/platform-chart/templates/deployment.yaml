@@ -19,6 +19,8 @@ spec:
         app: platform-api
 
     spec:
+      imagePullSecrets:
+        - name: ecr-secret
       containers:
 
       - name: platform-api
