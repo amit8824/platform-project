@@ -21,7 +21,7 @@ def home():
     return {
         "service": "platform-api",
         "status": "running",
-        "version": "v2"
+        "version": "v3"
     }
 
 
