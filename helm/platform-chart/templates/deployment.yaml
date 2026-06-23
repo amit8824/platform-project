@@ -28,7 +28,7 @@ spec:
             name: platform-config
         - secretRef:
             name: platform-secret
-        imagePullPolicy: Never
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8000
         readinessProbe:
