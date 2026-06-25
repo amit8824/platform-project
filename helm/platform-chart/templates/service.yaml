@@ -4,6 +4,9 @@ kind: Service
 metadata: 
   name: platform-service
 
+  labels:
+    app: platform-api
+
 spec:
   type: ClusterIP
   selector:
