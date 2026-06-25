@@ -6,14 +6,17 @@ metadata:
 
 spec:   
   
+  revisionHistoryLimit: 2
   replicas: {{ .Values.replicaCount }}
   
   strategy:
     canary:
       steps:
       - setWeight: 20
-      - pause:
-          duration: 60
+      - analysis:
+          templates:
+          - templateName: platform-health-check
+
       - setWeight: 50
       - pause:
           duration: 60
