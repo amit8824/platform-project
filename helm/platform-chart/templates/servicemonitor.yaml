@@ -11,7 +11,7 @@ spec:
 
   selector:
     matchLabels:
-      app: platform-app
+      app: platform-api
 
   endpoints:
 
