@@ -90,3 +90,25 @@ jobs:
         git commit -m "update image version"
 
         git push
+
+
+  sre-validation:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - uses: actions/checkout@v4
+
+    - name: Python setup
+      uses: actions/setup-python@v5
+      with:
+       python-version: "3.11"
+
+    - name: Install libs
+      run: |
+       pip install -r sre-automation/requirements.txt
+
+    - name: Validate scripts
+      run: |
+       python -m py_compile sre-automation/*.py

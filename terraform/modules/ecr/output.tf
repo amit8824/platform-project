@@ -1,0 +1,5 @@
+output "repo_url" {
+
+  value = aws_ecr_repository.platform.repository_url
+
+}
