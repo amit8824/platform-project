@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 
 metadata:
-  name: {{ .Values.name }}
+  name: {{ .Values.app.name }}
 
 spec:   
   
