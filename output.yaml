@@ -1,0 +1,202 @@
+---
+# Source: platform-chart/templates/secret.yaml
+apiVersion: v1 
+kind: Secret
+
+metadata:
+  name: platform-secret
+
+type: Opaque
+
+data: 
+  DB_PASSWORD: cGFzc3dvcmQ=
+---
+# Source: platform-chart/templates/configmap.yaml
+apiVersion: v1 
+kind: ConfigMap  
+
+metadata:
+  name: platform-config
+    
+data:
+  APP_ENV: "production"
+  LOG_LEVEL: "INFO"
+---
+# Source: platform-chart/templates/service.yaml
+apiVersion: v1 
+kind: Service
+
+metadata: 
+  name: platform-service
+
+  labels:
+    app: platform-api
+
+spec:
+  type: ClusterIP
+  selector:
+    app: platform-api
+  ports:
+  - name: http   
+    port: 80
+    targetPort: 8000
+
+---
+# Source: platform-chart/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+
+metadata:
+  name: platform-ingress
+
+spec:
+  ingressClassName: nginx
+
+  rules:
+  - host: platform.local
+    http: 
+      paths:
+      - path: /
+        pathType: Prefix 
+        backend:
+          service: 
+            name: platform-service
+            port:
+              number: 80
+
+---
+# Source: platform-chart/templates/analysis-template.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+
+metadata:
+  name: platform-health-check
+
+spec:
+
+  metrics:
+
+  - name: pod-availability
+
+    interval: 30s
+
+    count: 2
+
+    successCondition: result[0] >= 1
+
+    failureLimit: 1
+
+    provider:
+
+      prometheus:
+
+        address: http://monitoring-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
+
+        query: |
+          min(
+            up{
+              job="platform-service"
+            }
+          )
+
+---
+# Source: platform-chart/templates/rollout.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+
+metadata:
+  name: platform-app
+
+spec:   
+  
+  revisionHistoryLimit: 2
+  replicas: 2
+  
+  strategy:
+    canary:
+      steps:
+      - setWeight: 20
+      - analysis:
+          templates:
+          - templateName: platform-health-check
+
+      - setWeight: 50
+      - pause:
+          duration: 60
+      - setWeight: 100
+      
+  selector:
+    matchLabels:
+      app: platform-api
+
+  template:
+    
+    metadata:
+      labels:
+        app: platform-api
+
+    spec:
+      imagePullSecrets:
+        - name: ecr-secret
+      containers:
+
+      - name: platform-api
+        image: "793477791445.dkr.ecr.ap-south-1.amazonaws.com/platform-api:2fd617a0cc56abe0027ff478de4cbd659dde01e0"
+        envFrom:
+        - configMapRef:
+            name: platform-config
+        - secretRef:
+            name: platform-secret
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8000
+        readinessProbe:
+
+          httpGet:
+            path: /health
+            port: 8000
+
+          initialDelaySeconds: 5
+          periodSeconds: 10
+
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+
+          initialDelaySeconds: 15
+          periodSeconds: 20
+
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+
+            
+
+---
+# Source: platform-chart/templates/servicemonitor.yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+
+metadata:
+  name: platform-monitor
+
+  labels:
+    release: monitoring
+
+spec:
+
+  selector:
+    matchLabels:
+      app: platform-api
+
+  endpoints:
+
+  - port: http
+    path: /metrics
+    interval: 15s
