@@ -1,100 +1,95 @@
 #!/bin/bash
 
-set -e
+set -euo pipefail
 
-# Determine the project root based on the script location
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+TF_DIR="$PROJECT_ROOT/terraform/env/dev"
 
-cd "$PROJECT_ROOT"
+echo "========================================="
+echo " Destroying Platform Project"
+echo "========================================="
 
-echo "==============================="
-echo "Platform Project Safe Destroy"
-echo "==============================="
+###############################################
+# Update kubeconfig (ignore if cluster already gone)
+###############################################
 
-echo ""
-echo "Step 1 - Current Kubernetes Context"
-kubectl config current-context || true
+aws eks update-kubeconfig \
+  --region ap-south-1 \
+  --name platform-eks >/dev/null 2>&1 || true
 
-echo ""
-echo "Step 2 - Existing ArgoCD Applications"
-kubectl get applications -A || true
+###############################################
+# Delete ArgoCD Application
+###############################################
 
-echo ""
-echo "Step 3 - Existing Helm Releases"
-helm list --all-namespaces || true
+echo "Deleting ArgoCD Application..."
 
-echo ""
-echo "Step 4 - Waiting 5 seconds..."
-sleep 5
+kubectl delete application platform-api \
+  -n argocd \
+  --ignore-not-found=true || true
 
-echo ""
-echo "Step 5 - Running Terraform Destroy"
+sleep 10
 
-cd "$PROJECT_ROOT/terraform/env/dev"
+###############################################
+# Remove Application from Terraform state
+###############################################
 
-echo ""
-echo "Current Directory:"
-pwd
+cd "$TF_DIR"
+
+terraform state rm \
+module.argocd_application.kubernetes_manifest.platform_application \
+>/dev/null 2>&1 || true
+
+###############################################
+# Destroy Terraform
+###############################################
+
+echo
+echo "Running Terraform Destroy..."
 
 terraform destroy -auto-approve
 
-echo ""
-echo "=========================================="
-echo " Terraform Destroy Completed"
-echo "=========================================="
+###############################################
+# Cluster already destroyed?
+###############################################
 
-echo ""
-echo "Checking Remaining AWS Resources..."
+if ! kubectl cluster-info >/dev/null 2>&1
+then
+    echo
+    echo "EKS cluster deleted successfully."
+    exit 0
+fi
 
-echo ""
-echo "EKS Clusters"
-aws eks list-clusters --region ap-south-1
+###############################################
+# Cleanup stuck namespaces
+###############################################
 
-echo ""
-echo "EC2 Instances"
-aws ec2 describe-instances \
---region ap-south-1 \
---filters Name=instance-state-name,Values=running \
---query 'Reservations[*].Instances[*].[InstanceId,State.Name]' \
---output table
+for ns in argocd monitoring argo-rollouts
+do
 
-echo ""
-echo "NAT Gateways"
-aws ec2 describe-nat-gateways \
---region ap-south-1 \
---query 'NatGateways[*].[NatGatewayId,State]' \
---output table
+    if kubectl get ns "$ns" >/dev/null 2>&1
+    then
 
-echo ""
-echo "Load Balancers"
-aws elbv2 describe-load-balancers \
---region ap-south-1 \
---query 'LoadBalancers[*].[LoadBalancerName,State.Code]' \
---output table
+        STATUS=$(kubectl get ns "$ns" \
+        -o jsonpath='{.status.phase}')
 
-echo ""
-echo "EBS Volumes"
-aws ec2 describe-volumes \
---region ap-south-1 \
---query 'Volumes[*].[VolumeId,State]' \
---output table
+        if [[ "$STATUS" == "Terminating" ]]
+        then
 
-echo ""
-echo "Elastic IPs"
-aws ec2 describe-addresses \
---region ap-south-1 \
---query 'Addresses[*].[PublicIp,AllocationId]' \
---output table
+            echo "Removing finalizers from $ns..."
 
-echo ""
-echo "ECR Repositories"
-aws ecr describe-repositories \
---region ap-south-1 \
---query 'repositories[*].repositoryName' \
---output table
+            kubectl get namespace "$ns" -o json \
+            | jq '.spec.finalizers=[]' \
+            | kubectl replace \
+            --raw "/api/v1/namespaces/$ns/finalize" \
+            -f - || true
 
-echo ""
-echo "=========================================="
-echo "Destroy Validation Finished"
-echo "=========================================="
+        fi
+
+    fi
+
+done
+
+echo
+echo "========================================="
+echo " Destroy Completed"
+echo "========================================="

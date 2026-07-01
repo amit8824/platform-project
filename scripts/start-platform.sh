@@ -1,35 +1,60 @@
 #!/bin/bash
 
+set -euo pipefail
+
+PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+TF_DIR="$PROJECT_ROOT/terraform/env/dev"
+
+AWS_REGION="ap-south-1"
+CLUSTER_NAME="platform-eks"
+
+cd "$TF_DIR"
+
 echo "========================================="
-echo "Starting Platform Port Forwards"
+echo " Phase 1 - Create AWS Infrastructure"
 echo "========================================="
 
-# Kill old port-forwards
-pkill -f "kubectl port-forward" 2>/dev/null || true
+terraform init
 
-sleep 2
+terraform apply \
+-target=module.vpc \
+-target=module.eks \
+-auto-approve
 
-echo "Starting the Application..."
-kubectl port-forward svc/platform-service 8000:80 >/tmp/argocd.log 2>&1 &
+echo
+echo "Waiting for EKS API..."
 
-echo "Starting ArgoCD..."
-kubectl port-forward svc/argocd-server -n argocd 8081:443 >/tmp/argocd.log 2>&1 &
+until aws eks describe-cluster \
+--name "$CLUSTER_NAME" \
+--region "$AWS_REGION" >/dev/null 2>&1
+do
+    echo "Waiting for cluster..."
+    sleep 20
+done
 
-echo "Starting Grafana..."
-kubectl port-forward svc/monitoring-grafana -n monitoring 3000:80 >/tmp/grafana.log 2>&1 &
+echo
+echo "Updating kubeconfig..."
 
-echo "Starting Prometheus..."
-kubectl port-forward svc/monitoring-kube-prometheus-prometheus -n monitoring 9090:9090 >/tmp/prometheus.log 2>&1 &
+aws eks update-kubeconfig \
+--region "$AWS_REGION" \
+--name "$CLUSTER_NAME"
 
+echo
+echo "Waiting for nodes..."
 
-echo "Waiting..."
-sleep 5
+kubectl wait \
+--for=condition=Ready node \
+--all \
+--timeout=10m
 
-echo ""
-echo "================ URLs ================"
-echo "App Health" : http://localhost:8000/health
-echo "App Metrics": http://localhost:8000/metrics
-echo "ArgoCD      : https://localhost:8081"
-echo "Grafana     : http://localhost:3000"
-echo "Prometheus  : http://localhost:9090"
-echo "======================================"
+echo
+echo "========================================="
+echo " Phase 2 - Install Addons"
+echo "========================================="
+
+terraform apply -auto-approve
+
+echo
+echo "========================================="
+echo " Platform Ready"
+echo "========================================="

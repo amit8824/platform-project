@@ -1,0 +1,248 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  annotations:
+    argocd.argoproj.io/tracking-id: platform-api:argoproj.io/Application:argocd/platform-api
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"argoproj.io/v1alpha1","kind":"Application","metadata":{"annotations":{"argocd.argoproj.io/tracking-id":"platform-api:argoproj.io/Application:argocd/platform-api"},"name":"platform-api","namespace":"argocd"},"spec":{"destination":{"namespace":"default","server":"https://kubernetes.default.svc"},"project":"default","source":{"path":"helm/platform-chart","repoURL":"https://github.com/amit8824/platform-project.git","targetRevision":"main"},"syncPolicy":{"automated":{"prune":true,"selfHeal":true}}}}
+  creationTimestamp: "2026-06-30T08:18:57Z"
+  generation: 221
+  name: platform-api
+  namespace: argocd
+  resourceVersion: "51874"
+  uid: 49425f9f-37de-4857-9c3c-bc6925f8dd60
+spec:
+  destination:
+    namespace: default
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    path: helm/platform-chart
+    repoURL: https://github.com/amit8824/platform-project.git
+    targetRevision: main
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+status:
+  controllerNamespace: argocd
+  health:
+    lastTransitionTime: "2026-06-30T08:18:57Z"
+    status: Progressing
+  history:
+  - deployStartedAt: "2026-06-30T08:18:57Z"
+    deployedAt: "2026-06-30T08:19:01Z"
+    id: 0
+    initiatedBy:
+      automated: true
+    revision: a5fd8985aaabefd23a9475395596c20a28787964
+    source:
+      path: helm/platform-chart
+      repoURL: https://github.com/amit8824/platform-project.git
+      targetRevision: main
+  - deployStartedAt: "2026-06-30T08:19:18Z"
+    deployedAt: "2026-06-30T08:19:19Z"
+    id: 1
+    initiatedBy:
+      username: admin
+    revision: a5fd8985aaabefd23a9475395596c20a28787964
+    source:
+      path: helm/platform-chart
+      repoURL: https://github.com/amit8824/platform-project.git
+      targetRevision: main
+  - deployStartedAt: "2026-06-30T08:19:43Z"
+    deployedAt: "2026-06-30T08:19:47Z"
+    id: 2
+    initiatedBy:
+      automated: true
+    revision: 3ddb5b56dad012444983aa8daa2c1a8b402b55de
+    source:
+      path: helm/platform-chart
+      repoURL: https://github.com/amit8824/platform-project.git
+      targetRevision: main
+  - deployStartedAt: "2026-06-30T08:21:24Z"
+    deployedAt: "2026-06-30T08:21:26Z"
+    id: 3
+    initiatedBy:
+      username: admin
+    revision: 3ddb5b56dad012444983aa8daa2c1a8b402b55de
+    source:
+      path: helm/platform-chart
+      repoURL: https://github.com/amit8824/platform-project.git
+      targetRevision: main
+  - deployStartedAt: "2026-06-30T08:28:12Z"
+    deployedAt: "2026-06-30T08:28:14Z"
+    id: 4
+    initiatedBy:
+      username: admin
+    revision: 3ddb5b56dad012444983aa8daa2c1a8b402b55de
+    source:
+      path: helm/platform-chart
+      repoURL: https://github.com/amit8824/platform-project.git
+      targetRevision: main
+  operationState:
+    finishedAt: "2026-06-30T08:28:14Z"
+    message: successfully synced (all tasks run)
+    operation:
+      initiatedBy:
+        username: admin
+      retry: {}
+      sync:
+        prune: true
+        revision: 3ddb5b56dad012444983aa8daa2c1a8b402b55de
+        source:
+          path: helm/platform-chart
+          repoURL: https://github.com/amit8824/platform-project.git
+          targetRevision: main
+        syncStrategy:
+          hook:
+            force: true
+    phase: Succeeded
+    startedAt: "2026-06-30T08:28:12Z"
+    syncResult:
+      resources:
+      - group: ""
+        hookPhase: Running
+        kind: Secret
+        message: secret/platform-secret unchanged
+        name: platform-secret
+        namespace: default
+        status: Synced
+        syncPhase: Sync
+        version: v1
+      - group: ""
+        hookPhase: Running
+        kind: ConfigMap
+        message: configmap/platform-config unchanged
+        name: platform-config
+        namespace: default
+        status: Synced
+        syncPhase: Sync
+        version: v1
+      - group: ""
+        hookPhase: Running
+        kind: Service
+        message: service/platform-service unchanged
+        name: platform-service
+        namespace: default
+        status: Synced
+        syncPhase: Sync
+        version: v1
+      - group: networking.k8s.io
+        hookPhase: Running
+        kind: Ingress
+        message: ingress.networking.k8s.io/platform-ingress unchanged
+        name: platform-ingress
+        namespace: default
+        status: Synced
+        syncPhase: Sync
+        version: v1
+      - group: argoproj.io
+        hookPhase: Running
+        kind: Application
+        message: application.argoproj.io/platform-api unchanged
+        name: platform-api
+        namespace: argocd
+        status: Synced
+        syncPhase: Sync
+        version: v1alpha1
+      - group: argoproj.io
+        hookPhase: Running
+        images:
+        - 793477791445.dkr.ecr.ap-south-1.amazonaws.com/platform-api:a5fd8985aaabefd23a9475395596c20a28787964
+        kind: Rollout
+        message: rollout.argoproj.io/platform-api configured
+        name: platform-api
+        namespace: default
+        status: Synced
+        syncPhase: Sync
+        version: v1alpha1
+      - group: argoproj.io
+        hookPhase: Running
+        kind: AnalysisTemplate
+        message: analysistemplate.argoproj.io/platform-health-check unchanged
+        name: platform-health-check
+        namespace: default
+        status: Synced
+        syncPhase: Sync
+        version: v1alpha1
+      - group: monitoring.coreos.com
+        hookPhase: Running
+        kind: ServiceMonitor
+        message: servicemonitor.monitoring.coreos.com/platform-monitor unchanged
+        name: platform-monitor
+        namespace: default
+        status: Synced
+        syncPhase: Sync
+        version: v1
+      revision: 3ddb5b56dad012444983aa8daa2c1a8b402b55de
+      source:
+        path: helm/platform-chart
+        repoURL: https://github.com/amit8824/platform-project.git
+        targetRevision: main
+  reconciledAt: "2026-06-30T08:31:01Z"
+  resourceHealthSource: appTree
+  resources:
+  - kind: ConfigMap
+    name: platform-config
+    namespace: default
+    status: Synced
+    version: v1
+  - kind: Secret
+    name: platform-secret
+    namespace: default
+    status: Synced
+    version: v1
+  - kind: Service
+    name: platform-service
+    namespace: default
+    status: Synced
+    version: v1
+  - group: argoproj.io
+    kind: AnalysisTemplate
+    name: platform-health-check
+    namespace: default
+    status: Synced
+    version: v1alpha1
+  - group: argoproj.io
+    kind: Application
+    name: platform-api
+    namespace: argocd
+    status: Synced
+    version: v1alpha1
+  - group: argoproj.io
+    kind: Rollout
+    name: platform-api
+    namespace: default
+    status: Synced
+    version: v1alpha1
+  - group: monitoring.coreos.com
+    kind: ServiceMonitor
+    name: platform-monitor
+    namespace: default
+    status: Synced
+    version: v1
+  - group: networking.k8s.io
+    kind: Ingress
+    name: platform-ingress
+    namespace: default
+    status: Synced
+    version: v1
+  sourceHydrator: {}
+  sourceType: Helm
+  summary:
+    externalURLs:
+    - http://platform.local/
+    images:
+    - 793477791445.dkr.ecr.ap-south-1.amazonaws.com/platform-api:a5fd8985aaabefd23a9475395596c20a28787964
+  sync:
+    comparedTo:
+      destination:
+        namespace: default
+        server: https://kubernetes.default.svc
+      source:
+        path: helm/platform-chart
+        repoURL: https://github.com/amit8824/platform-project.git
+        targetRevision: main
+    revision: 3ddb5b56dad012444983aa8daa2c1a8b402b55de
+    status: Synced

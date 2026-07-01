@@ -9,6 +9,9 @@ pkill -f "kubectl port-forward" 2>/dev/null || true
 
 sleep 2
 
+echo "Starting App..."
+kubectl port-forward svc/platform-service 8000:80 >/tmp/argocd.log 2>&1 &
+
 echo "Starting ArgoCD..."
 kubectl port-forward svc/argocd-server -n argocd 8081:443 >/tmp/argocd.log 2>&1 &
 
@@ -23,6 +26,8 @@ sleep 5
 
 echo ""
 echo "================ URLs ================"
+echo "App health  : http://localhost:8000/health"
+echo "App metrics : http://localhost:8000/metrics"
 echo "ArgoCD      : https://localhost:8081"
 echo "Grafana     : http://localhost:3000"
 echo "Prometheus  : http://localhost:9090"
