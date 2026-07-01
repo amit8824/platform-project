@@ -7,7 +7,7 @@ replicaCount: 2
 
 image:
   repository: 793477791445.dkr.ecr.ap-south-1.amazonaws.com/platform-api
-  tag: a5fd8985aaabefd23a9475395596c20a28787964
+  tag: 435ed5246e0e3e0376abe0b158ec33f0de256660
 
 
 service:
